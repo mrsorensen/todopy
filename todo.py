@@ -1,7 +1,7 @@
 import curses
 import json
 import os
-import random
+# import random
 
 
 # CONFIG -------------------
@@ -9,7 +9,7 @@ todojson = 'todos.json'
 # END - CONFIG ------------
 
 
-# Main
+# Initialises curses and starts the main loop
 def main(s):
     curses.curs_set(0)
     curses.use_default_colors()
@@ -20,9 +20,10 @@ def main(s):
     # inp = s.getch()
     # s.addstr(0,0,str(inp))
     # s.getch()
-    run(s)
+    main_loop(s)
 
-def run(s):
+# Looping for user input
+def main_loop(s):
     current_choice = 0
     h, w = s.getmaxyx()
     start = 0
@@ -66,6 +67,7 @@ def run(s):
             if current_choice > 0 and current_choice == len(todos) -1:
                 current_choice -= 1
 
+# Return the number of completed todos 
 def count_completed(todos):
     completed = []
     for todo in todos:
@@ -73,11 +75,13 @@ def count_completed(todos):
             completed.append(todo)
     return len(completed)
 
+# Deletes a todo from todo json file
 def delete_todo(s, current_choice):
     todos = get_todos()
     del todos[current_choice]
     store_todos(todos)
 
+# Toggles the status of a todo object
 def toggle_todo(current_choice):
     todos = get_todos()
     if todos[current_choice]['completed'] == 'false':
@@ -86,6 +90,7 @@ def toggle_todo(current_choice):
         todos[current_choice]['completed'] = 'false'
     store_todos(todos)
 
+# Adds todo item to todolist json file
 def add_todo(todo):
     todos = get_todos()
     todos.append({
@@ -94,6 +99,7 @@ def add_todo(todo):
         })
     store_todos(todos)
 
+# Opens a form to input new todo
 def get_user_input(s, line):
     h, w = s.getmaxyx()
     s.addstr(h-1, 0, ' New todo:  ', curses.color_pair(3) | curses.A_BOLD | curses.A_REVERSE)
@@ -108,7 +114,7 @@ def get_user_input(s, line):
     else:
         return user_input
 
-
+# Prints main view
 def print_todos(s, current_choice, start, end):
 
     h, w = s.getmaxyx()
@@ -155,21 +161,21 @@ def verify_todo_file():
         with open(os.path.join(pwd, todojson), 'w+') as f:
             f.write('[]')
 
+# Writes todos json object to file
 def store_todos(todos):
     pwd = os.path.dirname(os.path.realpath(__file__))
     with open(os.path.join(pwd, todojson), 'w') as f:
         json.dump(todos, f, indent=2)
 
+# Clears screen
 def clear(s):
     s.erase()
 
-def fill_todos():
-
-    for _ in range(0, 60):
-        todo = random.randint(100000, 999999)
-        add_todo(str(todo).encode('utf-8'))
-
+# def fill_todos():
+#
+#     for _ in range(0, 60):
+#         todo = random.randint(100000, 999999)
+#         add_todo(str(todo).encode('utf-8'))
 
 curses.wrapper(main)
 
-# verify_todo_file(todojson)
