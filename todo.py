@@ -17,9 +17,6 @@ def main(s):
     curses.init_pair(2, curses.COLOR_GREEN, -1)
     curses.init_pair(3, curses.COLOR_BLUE, -1)
     
-    # inp = s.getch()
-    # s.addstr(0,0,str(inp))
-    # s.getch()
     main_loop(s)
 
 # Looping for user input
