@@ -1,12 +1,18 @@
 import curses
 import json
 import os
+import sys
 # import random
 
 
 # CONFIG -------------------
 todojson = 'todos.json'
-# END - CONFIG ------------
+# END - CONFIG ------------o
+
+try:
+    todojson = sys.argv[1]
+except:
+    pass
 
 
 # Initialises curses and starts the main loop
@@ -16,6 +22,7 @@ def main(s):
     curses.init_pair(1, curses.COLOR_YELLOW, -1)
     curses.init_pair(2, curses.COLOR_GREEN, -1)
     curses.init_pair(3, curses.COLOR_BLUE, -1)
+    curses.init_pair(4, curses.COLOR_RED, -1)
     
     main_loop(s)
 
@@ -24,14 +31,17 @@ def main_loop(s):
     current_choice = 0
     h, w = s.getmaxyx()
     start = 0
-    end = h-3
+    end = h-5
 
 
     while True:
+        # Check if window has been resized
         nh, nw = s.getmaxyx()
         if nh != h:
             start = 0
-            end = nh-3
+            end = nh-5
+            current_choice = 0
+        # Read todo json file
         todos = get_todos()
         clear(s)
         print_todos(s, current_choice, start, end)
@@ -52,17 +62,48 @@ def main_loop(s):
             current_choice -= 1
         # Add todo
         elif key == 97:
-            user_input = get_user_input(s, len(todos)+5)
+            user_input = get_user_input(s, 'new')
             if len(user_input) > 0:
                 add_todo(user_input)
+        # Edit todo
+        elif key == 101:
+            user_input = get_user_input(s, 'edit')
+            if len(user_input) > 0:
+                replace_todo(current_choice, user_input)
         # Toggle todo
         elif key == 32 or key == 13 or key == 10:
             toggle_todo(current_choice)
         # Delete todo
         elif key == 127 or key == 330 or key == 100:
-            delete_todo(s, current_choice)
-            if current_choice > 0 and current_choice == len(todos) -1:
-                current_choice -= 1
+            s.addstr(nh-1, 0, 'Delete todo \"' + todos[current_choice]['objective'] + '\"? y/n', curses.color_pair(4) | curses.A_REVERSE)
+            if s.getch() == 121:
+                delete_todo(s, current_choice)
+                if current_choice > 0 and current_choice == len(todos) -1:
+                    current_choice -= 1
+        # Clear completed
+        elif key == 99:
+            s.addstr(nh-1, 0, 'Clear completed todos? y/n', curses.color_pair(4) | curses.A_REVERSE)
+            s.addstr(0, 0, 'abc')
+            s.clrtoeol()
+            if s.getch() == 121:
+                clear_completed()
+        # Quit
+        elif key == 113:
+            exit()
+
+# Clear completed todos
+def clear_completed():
+    todos = get_todos()
+    for idx, todo in reversed(list(enumerate(todos))):
+        if todo['completed'] == 'true':
+            del todos[idx]
+    store_todos(todos)
+
+# Replace todo
+def replace_todo(current_choice, edited_todo):
+    todos = get_todos()
+    todos[current_choice]['objective'] = edited_todo.decode('utf-8')
+    store_todos(todos)
 
 # Return the number of completed todos 
 def count_completed(todos):
@@ -97,12 +138,18 @@ def add_todo(todo):
     store_todos(todos)
 
 # Opens a form to input new todo
-def get_user_input(s, line):
+def get_user_input(s, option):
     h, w = s.getmaxyx()
-    s.addstr(h-1, 0, ' New todo:  ', curses.color_pair(3) | curses.A_BOLD | curses.A_REVERSE)
+
+    if option == 'edit':
+        prompt = ' Edit todo: '
+    elif option == 'new':
+        prompt = ' New todo: '
+
+    s.addstr(h-1, 0, prompt, curses.color_pair(3) | curses.A_BOLD | curses.A_REVERSE)
     curses.echo()
     curses.curs_set(1)
-    user_input = s.getstr(h-1, 11)
+    user_input = s.getstr(h-1, len(prompt) + 2)
 
     curses.curs_set(0)
     curses.noecho()
@@ -114,28 +161,34 @@ def get_user_input(s, line):
 # Prints main view
 def print_todos(s, current_choice, start, end):
 
+    startline = 2
     h, w = s.getmaxyx()
     if current_choice >= start:
         current_choice = current_choice - start
 
     todos = get_todos()
 
-    s.addstr(0, 0, 'Todos:' + '    ' + str(start + current_choice + 1) + '/' + str(len(todos)), curses.A_BOLD)
+    # s.addstr(0, 0, 'Todos:' + '    ' + str(start + current_choice + 1) + '/' + str(len(todos)), curses.A_BOLD)
+    s.addstr(0, 0, 'Todos:', curses.A_BOLD)
     s.addstr(h-2, 0, 'Completed: ' + str(count_completed(todos)) + '/' + str(len(todos)))
 
 
     if todos:
+        if end < len(todos):
+            s.addstr(h-3, 0, ' ···')
+        if start > 0:
+            s.addstr(1, 0, ' ···')
         for idx, todo in enumerate(todos[start:end]):
             if idx == current_choice:
                 if todo['completed'] == 'false':
-                    s.addstr(idx+1, 0, ' [ ] ' + todo['objective'] + ' ',curses.color_pair(1) | curses.A_REVERSE)
+                    s.addstr(idx+startline, 0, ' [ ] ' + todo['objective'] + ' ',curses.color_pair(1) | curses.A_REVERSE)
                 else:
-                    s.addstr(idx+1, 0, ' [X] ' + todo['objective'] + ' ', curses.color_pair(2) | curses.A_REVERSE)
+                    s.addstr(idx+startline, 0, ' [X] ' + todo['objective'] + ' ', curses.color_pair(2) | curses.A_REVERSE)
             else:
                 if todo['completed'] == 'false':
-                    s.addstr(idx+1, 0, ' [ ] ' + todo['objective'] + ' ', curses.color_pair(1))
+                    s.addstr(idx+startline, 0, ' [ ] ' + todo['objective'] + ' ', curses.color_pair(1))
                 else:
-                    s.addstr(idx+1, 0, ' [X] ' + todo['objective'] + ' ', curses.color_pair(2))
+                    s.addstr(idx+startline, 0, ' [X] ' + todo['objective'] + ' ', curses.color_pair(2))
     else:
         s.addstr(2, 0, 'No todos. Press \'a\' to add a new todo.')
 
