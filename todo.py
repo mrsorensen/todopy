@@ -183,12 +183,12 @@ def print_todos(s, current_choice, start, end):
                 if todo['completed'] == 'false':
                     s.addstr(idx+startline, 0, ' [ ] ' + todo['objective'] + ' ',curses.color_pair(1) | curses.A_REVERSE)
                 else:
-                    s.addstr(idx+startline, 0, ' [X] ' + todo['objective'] + ' ', curses.color_pair(2) | curses.A_REVERSE)
+                    s.addstr(idx+startline, 0, ' [✔] ' + todo['objective'] + ' ', curses.color_pair(2) | curses.A_REVERSE)
             else:
                 if todo['completed'] == 'false':
                     s.addstr(idx+startline, 0, ' [ ] ' + todo['objective'] + ' ', curses.color_pair(1))
                 else:
-                    s.addstr(idx+startline, 0, ' [X] ' + todo['objective'] + ' ', curses.color_pair(2))
+                    s.addstr(idx+startline, 0, ' [✔] ' + todo['objective'] + ' ', curses.color_pair(2))
     else:
         s.addstr(2, 0, 'No todos. Press \'a\' to add a new todo.')
 
