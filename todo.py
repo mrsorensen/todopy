@@ -10,7 +10,7 @@ todojson = 'todos.json'
 # END - CONFIG ------------o
 
 try:
-    todojson = sys.argv[1]
+    todojson = sys.argv[1] + '.json'
 except:
     pass
 
@@ -19,7 +19,7 @@ except:
 def main(s):
     curses.curs_set(0)
     curses.use_default_colors()
-    curses.init_pair(1, curses.COLOR_YELLOW, -1)
+    curses.init_pair(1, curses.COLOR_YELLOW, -1) # This used to be yellow
     curses.init_pair(2, curses.COLOR_GREEN, -1)
     curses.init_pair(3, curses.COLOR_BLUE, -1)
     curses.init_pair(4, curses.COLOR_RED, -1)
@@ -38,6 +38,8 @@ def main_loop(s):
         # Check if window has been resized
         nh, nw = s.getmaxyx()
         if nh != h:
+            h = nh
+            w = nw
             start = 0
             end = nh-5
             current_choice = 0
@@ -168,8 +170,7 @@ def print_todos(s, current_choice, start, end):
 
     todos = get_todos()
 
-    # s.addstr(0, 0, 'Todos:' + '    ' + str(start + current_choice + 1) + '/' + str(len(todos)), curses.A_BOLD)
-    s.addstr(0, 0, 'Todos:', curses.A_BOLD)
+    s.addstr(0, 0, os.path.splitext(todojson)[0].capitalize() + ': ' + str(current_choice), curses.A_BOLD)
     s.addstr(h-2, 0, 'Completed: ' + str(count_completed(todos)) + '/' + str(len(todos)))
 
 
@@ -181,9 +182,9 @@ def print_todos(s, current_choice, start, end):
         for idx, todo in enumerate(todos[start:end]):
             if idx == current_choice:
                 if todo['completed'] == 'false':
-                    s.addstr(idx+startline, 0, ' [ ] ' + todo['objective'] + ' ',curses.color_pair(1) | curses.A_REVERSE)
+                    s.addstr(idx+startline, 0, ' [ ] ' + todo['objective'] + ' ',curses.color_pair(1) | curses.A_BOLD | curses.A_REVERSE)
                 else:
-                    s.addstr(idx+startline, 0, ' [✔] ' + todo['objective'] + ' ', curses.color_pair(2) | curses.A_REVERSE)
+                    s.addstr(idx+startline, 0, ' [✔] ' + todo['objective'] + ' ', curses.color_pair(2) | curses.A_BOLD | curses.A_REVERSE)
             else:
                 if todo['completed'] == 'false':
                     s.addstr(idx+startline, 0, ' [ ] ' + todo['objective'] + ' ', curses.color_pair(1))
